@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Convertir Imágenes a PDF</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 30px; }
+    #preview img { max-width: 150px; margin: 5px; border: 1px solid #ccc; }
+    button { padding: 10px 20px; margin-top: 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Convertir Fotos a PDF</h1>
+  <input type="file" accept="image/*" multiple onchange="handleFiles(this.files)" />
+  <div id="preview"></div>
+  <button onclick="convertToPDF()">📄 Crear PDF</button>
+
+  <script>
+    let imageFiles = [];
+
+    function handleFiles(files) {
+      imageFiles = Array.from(files);
+      const preview = document.getElementById("preview");
+      preview.innerHTML = "";
+      imageFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function convertToPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+      for (let i = 0; i < imageFiles.length; i++) {
+        const imgData = await readFileAsDataURL(imageFiles[i]);
+        const img = new Image();
+        img.src = imgData;
+        await new Promise(resolve => img.onload = resolve);
+
+        const ratio = img.width / img.height;
+        const width = 210;
+        const height = width / ratio;
+
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, 0, width, height);
+      }
+      pdf.save("imagenes.pdf");
+    }
+
+    function readFileAsDataURL(file) {
+      return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>
